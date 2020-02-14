@@ -14,6 +14,7 @@ type IProps = {
 type IState = {
     // using 'interface'
     jokes: any;
+    loading: boolean;
 };
 class JokeList extends Component<IProps, IState> {
     static defaultProps = {
@@ -24,6 +25,7 @@ class JokeList extends Component<IProps, IState> {
         super(props);
         this.state = {
             jokes: JSON.parse(window.localStorage.getItem('jokes') || '[]'),
+            loading: false,
         };
         this.handleClick = this.handleClick.bind(this);
     }
@@ -32,7 +34,7 @@ class JokeList extends Component<IProps, IState> {
         if (jokes.length === 0) this.getJokes();
     }
 
-    private async getJokes() {
+    private async getJokes(): Promise<void> {
         //Load Jokes
         let jokes: { id: string; text: any; votes: number }[] = [];
         while (jokes.length < this.props.numJokesToGet) {
@@ -43,6 +45,7 @@ class JokeList extends Component<IProps, IState> {
         }
         this.setState(
             st => ({
+                loading: false,
                 jokes: [...st.jokes, ...jokes],
             }), //updated and set local storage
             () => window.localStorage.setItem('jokes', JSON.stringify(this.state.jokes)),
@@ -62,10 +65,18 @@ class JokeList extends Component<IProps, IState> {
     }
 
     private handleClick(): void {
-        this.getJokes();
+        this.setState({ loading: true }, this.getJokes);
     }
 
-    public render() {
+    public render(): JSX.Element {
+        if (this.state.loading) {
+            return (
+                <div className="JokeList-spinner">
+                    <i className="far fa-8x fa-laugh fa-spin"></i>
+                    <h1 className="JokeList-title">Loading...</h1>
+                </div>
+            );
+        }
         return (
             <div className="JokeList">
                 <div className="JokeList-sidebar">
