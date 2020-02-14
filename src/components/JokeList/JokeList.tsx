@@ -4,6 +4,8 @@ import axios from 'axios';
 import uuid from 'uuid/v4';
 import './JokeList.css';
 
+type asyncFn = () => Promise<boolean>;
+
 type IProps = {
     // using 'interface'
     numJokesToGet: number;
@@ -21,10 +23,15 @@ class JokeList extends Component<IProps, IState> {
     public constructor(props: IProps) {
         super(props);
         this.state = {
-            jokes: [],
+            jokes: JSON.parse(window.localStorage.getItem('jokes') || '[]'),
         };
     }
-    public async componentDidMount() {
+    public componentDidMount() {
+        const { jokes } = this.state;
+        if (jokes.length === 0) this.getJokes();
+    }
+
+    private async getJokes() {
         //Load Jokes
         let jokes = [];
         while (jokes.length < this.props.numJokesToGet) {
@@ -34,7 +41,10 @@ class JokeList extends Component<IProps, IState> {
             jokes.push({ id: uuid(), text: res.data.joke, votes: 0 });
         }
         this.setState({ jokes: jokes });
+        //set local storage
+        window.localStorage.setItem('jokes', JSON.stringify(jokes));
     }
+
     private handleVote(id: string | number, delta: number): void {
         this.setState(st => ({
             jokes: st.jokes.map((j: any) => {
